@@ -1,0 +1,7 @@
+[bol.com]
+url=https://www.bol.com/nl/p/sony-playstation-5-console/9300000004162282
+voorraad_tekst=Niet leverbaar
+
+[amazon.nl]
+url=https://www.amazon.nl/Sony-PlayStation-PlayStation®5-Console/dp/B08H93ZRK9/
+voorraad_tekst=Momenteel niet verkrijgbaar
