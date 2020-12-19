@@ -5,3 +5,7 @@ voorraad_tekst=Niet leverbaar
 [amazon.nl]
 url=https://www.amazon.nl/Sony-PlayStation-PlayStation®5-Console/dp/B08H93ZRK9/
 voorraad_tekst=Momenteel niet verkrijgbaar
+
+[coolblue.nl]
+url=https://www.coolblue.nl/product/865866/playstation-5.html
+voorraad_tekst=Binnenkort leverbaar

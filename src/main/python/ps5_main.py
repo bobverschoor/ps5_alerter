@@ -58,22 +58,36 @@ def leverbaar(url, check):
 def main():
     winkel = get_winkels()
     secret = get_secrets()
+    genotificeerd = False
+    winkels = ""
     for winkelnaam in winkel.sections():
+        if winkels == "":
+            winkels = winkelnaam
+        else:
+            winkels += ', ' + winkelnaam
         if leverbaar(winkel[winkelnaam][URL], winkel[winkelnaam][VOORRAAD_TEKST]):
             # telegram wil -100 voor chat_id indien een bot
             message = {'chat_id': "-100" + secret[TELEGRAM][CHANNEL_ID],
                        'text': winkelnaam + '\n' + winkel[winkelnaam][URL]}
             r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
-            if r.status_code != 200:
+            if r.status_code == 200:
+                genotificeerd = True
+            else:
                 print(r.text)
                 exit(1)
         else:
-            now = datetime.datetime.now()
-            if now.minute == 00 and 6 < now.hour < 22:
-                message = {'chat_id': "-100" + secret[TELEGRAM][CHANNEL_ID],
-                           'text': winkelnaam + '\nUurs controle'}
-                r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
+            pass
             #print("niet leverbaar bij " + winkelnaam)
+    if not genotificeerd:
+        now = datetime.datetime.now()
+        if now.minute == 00 and 6 < now.hour < 22:
+            message = {'chat_id': "-100" + secret[TELEGRAM][CHANNEL_ID],
+                       'text': winkels + '\nUurs controle'}
+            r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
+            if r.status_code != 200:
+                print(r.text)
+                exit(1)
+
 
 
 if __name__ == "__main__":
