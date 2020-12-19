@@ -80,9 +80,9 @@ def main():
             #print("niet leverbaar bij " + winkelnaam)
     if not genotificeerd:
         now = datetime.datetime.now()
-        if now.minute == 00 and 6 < now.hour < 22:
+        if now.minute == 0 and 6 < now.hour < 22:
             message = {'chat_id': "-100" + secret[TELEGRAM][CHANNEL_ID],
-                       'text': winkels + '\nUurs controle'}
+                       'text': winkels + '\nhebben de ps5 niet op voorraad.'}
             r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
             if r.status_code != 200:
                 print(r.text)
