@@ -1,9 +1,9 @@
 import requests
 import configparser
 import os
+import datetime
 
 BASE_URL = "https://api.telegram.org/bot"
-BOL_COM_PS5_URL = 'https://www.bol.com/nl/p/sony-playstation-5-console/9300000004162282'
 SECRETS_FILE = 'resource/secrets.txt'
 WINKELS_FILE = 'resource/winkels.txt'
 TELEGRAM = 'telegram'
@@ -41,7 +41,7 @@ def leverbaar(url, check):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1)'
     }
-    #amazon redirects indien geen browser like user agent
+    #amazon redirects indien geen browser-achtige user agent
     r = requests.get(url, headers=headers)
     if r.status_code == 200:
         if check in r.text:
@@ -57,9 +57,10 @@ def leverbaar(url, check):
 
 def main():
     winkel = get_winkels()
+    secret = get_secrets()
     for winkelnaam in winkel.sections():
         if leverbaar(winkel[winkelnaam][URL], winkel[winkelnaam][VOORRAAD_TEKST]):
-            secret = get_secrets()
+            # telegram wil -100 voor chat_id indien een bot
             message = {'chat_id': "-100" + secret[TELEGRAM][CHANNEL_ID],
                        'text': winkelnaam + '\n' + winkel[winkelnaam][URL]}
             r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
@@ -67,6 +68,11 @@ def main():
                 print(r.text)
                 exit(1)
         else:
+            now = datetime.datetime.now()
+            if now.minute == 00 and 6 < now.hour < 22:
+                message = {'chat_id': "-100" + secret[TELEGRAM][CHANNEL_ID],
+                           'text': winkelnaam + '\nUurs controle'}
+                r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
             print("niet leverbaar bij " + winkelnaam)
 
 
