@@ -73,7 +73,7 @@ def main():
                 message = {'chat_id': "-100" + secret[TELEGRAM][CHANNEL_ID],
                            'text': winkelnaam + '\nUurs controle'}
                 r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
-            print("niet leverbaar bij " + winkelnaam)
+            #print("niet leverbaar bij " + winkelnaam)
 
 
 if __name__ == "__main__":
