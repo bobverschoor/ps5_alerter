@@ -1,3 +1,5 @@
+import random
+
 import requests
 import configparser
 import os
@@ -39,10 +41,11 @@ def get_winkels():
 
 def leverbaar(url, check):
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1)'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_' + str(random.randint(0,9))
     }
     #amazon redirects indien geen browser-achtige user agent
-    r = requests.get(url, headers=headers)
+    s = requests.session()
+    r = s.get(url, headers=headers)
     if r.status_code == 200:
         if check in r.text:
             return False
@@ -54,10 +57,21 @@ def leverbaar(url, check):
         print(url)
         return False
 
+def notify(message):
+    secret = get_secrets()
+    # telegram wil -100 voor chat_id indien een bot
+    message = {'chat_id': "-100" + secret[TELEGRAM][CHANNEL_ID],
+               'text': message}
+    r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
+    if r.status_code == 200:
+        return True
+    else:
+        print(r.text)
+        exit(1)
+
 
 def main():
     winkel = get_winkels()
-    secret = get_secrets()
     genotificeerd = False
     winkels = ""
     for winkelnaam in winkel.sections():
@@ -66,27 +80,14 @@ def main():
         else:
             winkels += ', ' + winkelnaam
         if leverbaar(winkel[winkelnaam][URL], winkel[winkelnaam][VOORRAAD_TEKST]):
-            # telegram wil -100 voor chat_id indien een bot
-            message = {'chat_id': "-100" + secret[TELEGRAM][CHANNEL_ID],
-                       'text': winkelnaam + '\n' + winkel[winkelnaam][URL]}
-            r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
-            if r.status_code == 200:
-                genotificeerd = True
-            else:
-                print(r.text)
-                exit(1)
+            genotificeerd = notify(winkelnaam + '\n' + winkel[winkelnaam][URL])
         else:
             pass
             #print("niet leverbaar bij " + winkelnaam)
     if not genotificeerd:
         now = datetime.datetime.now()
         if now.minute == 0 and 6 < now.hour < 22:
-            message = {'chat_id': "-100" + secret[TELEGRAM][CHANNEL_ID],
-                       'text': winkels + '\nhebben de ps5 niet op voorraad.'}
-            r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
-            if r.status_code != 200:
-                print(r.text)
-                exit(1)
+            notify(winkels + '\nhebben de ps5 niet op voorraad.')
 
 
 
