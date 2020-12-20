@@ -1,0 +1,3 @@
+[notify]
+start_uur = 6
+stop_uur = 22

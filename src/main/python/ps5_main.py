@@ -8,42 +8,78 @@ import datetime
 BASE_URL = "https://api.telegram.org/bot"
 SECRETS_FILE = 'resource/secrets.txt'
 WINKELS_FILE = 'resource/winkels.txt'
+CONFIG_FILE = 'resource/config.txt'
 TELEGRAM = 'telegram'
 CHANNEL_ID = 'channel_id'
 TOKEN = 'TOKEN'
 WINKEL = 'winkel'
 VOORRAAD_TEKST = 'voorraad_tekst'
 URL = 'url'
+NOTIFY = 'notify'
+NOTIFY_START_UUR = 'start_uur'
+NOTIFY_STOP_UUR = 'stop_uur'
+
+
+def get_base_config(filename) -> configparser.ConfigParser:
+    config = configparser.ConfigParser()
+    if os.path.isfile(filename):
+        config.read(filename)
+    else:
+        print("Missing file: " + filename)
+        exit(1)
+    return config
 
 
 def get_secrets():
-    config = configparser.ConfigParser()
-    if os.path.isfile(SECRETS_FILE):
-        config.read(SECRETS_FILE)
-        if TELEGRAM in config:
-            if CHANNEL_ID in config['telegram'] and TOKEN in config[TELEGRAM]:
-                return config
-            else:
-                print("Config file not properly filled, missing chanel_id of token")
+    config = get_base_config(SECRETS_FILE)
+    if TELEGRAM in config:
+        if CHANNEL_ID in config[TELEGRAM] and TOKEN in config[TELEGRAM]:
+            return config
         else:
-            print('Config does not contain telegram section')
+            print("Secrets file not properly filled, missing chanel_id of token")
     else:
-        print("Put your token and channel_id in a resources/secrets.txt file")
+        print('Secrets does not contain telegram section')
     exit(1)
 
 
 def get_winkels():
-    winkels = configparser.ConfigParser()
-    if os.path.isfile(WINKELS_FILE):
-        winkels.read(WINKELS_FILE)
-    return winkels
+    return get_base_config(WINKELS_FILE)
+
+
+def valid_hours(value):
+    if 0 <= value < 24:
+        return True
+    else:
+        return False
+
+
+def get_config():
+    config_ok = True
+    config = get_base_config(CONFIG_FILE)
+    if NOTIFY in config:
+        if NOTIFY_START_UUR in config[NOTIFY] and NOTIFY_STOP_UUR in config[NOTIFY]:
+            if not valid_hours(int(config[NOTIFY][NOTIFY_START_UUR])) or \
+               not valid_hours(int(config[NOTIFY][NOTIFY_STOP_UUR])):
+                config_ok = False
+                print("Config file values of " + NOTIFY + " not correct numbers, must be 0 - 23")
+        else:
+            config_ok = False
+            print("Config file not properly filled, missing " + NOTIFY_START_UUR + " or " + NOTIFY_STOP_UUR)
+    else:
+        config_ok = False
+        print("Config file not properly filled, missing " + NOTIFY)
+    if config_ok:
+        return config
+    else:
+        exit(1)
 
 
 def leverbaar(url, check):
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_' + str(random.randint(0,9))
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_' + str(random.randint(0, 9))
     }
-    #amazon redirects indien geen browser-achtige user agent
+    # amazon redirects indien geen browser-achtige user agent. daarnaast is er een soort bot detectie ;-0
+    # Hopelijk werkt de randomizer op de useragent goed genoeg, icm de sessie, en dus acceptatie van cookies.
     s = requests.session()
     r = s.get(url, headers=headers)
     if r.status_code == 200:
@@ -57,20 +93,26 @@ def leverbaar(url, check):
         print(url)
         return False
 
-def notify(message):
+
+def notify(message, config):
     secret = get_secrets()
+    now = datetime.datetime.now()
     # telegram wil -100 voor chat_id indien een bot
     message = {'chat_id': "-100" + secret[TELEGRAM][CHANNEL_ID],
                'text': message}
-    r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
-    if r.status_code == 200:
-        return True
+    if int(config[NOTIFY][NOTIFY_START_UUR]) <= now.hour < int(config[NOTIFY][NOTIFY_STOP_UUR]):
+        r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
+        if r.status_code == 200:
+            return True
+        else:
+            print(r.text)
+            exit(1)
     else:
-        print(r.text)
-        exit(1)
+        print("No notification due to configured time window")
 
 
 def main():
+    config = get_config()
     winkel = get_winkels()
     genotificeerd = False
     winkels = ""
@@ -80,15 +122,15 @@ def main():
         else:
             winkels += ', ' + winkelnaam
         if leverbaar(winkel[winkelnaam][URL], winkel[winkelnaam][VOORRAAD_TEKST]):
-            genotificeerd = notify(winkelnaam + '\n' + winkel[winkelnaam][URL])
+            genotificeerd = notify(winkelnaam + '\n' + winkel[winkelnaam][URL], config)
         else:
             pass
-            #print("niet leverbaar bij " + winkelnaam)
+            # print("niet leverbaar bij " + winkelnaam)
     if not genotificeerd:
         now = datetime.datetime.now()
-        if now.minute == 0 and 6 < now.hour < 22:
-            notify(winkels + '\nhebben de ps5 niet op voorraad.')
-
+        if now.minute == 0:
+            # Elk uur een notificatie om aan te tonen dat ie nog steeds draait en alles nog werkt.
+            notify(winkels + '\nhebben de ps5 niet op voorraad.', config)
 
 
 if __name__ == "__main__":
