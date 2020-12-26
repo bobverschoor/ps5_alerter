@@ -1,3 +1,6 @@
 [notify]
 start_uur = 6
 stop_uur = 22
+
+[proxy]
+proxylist_provider = https://free-proxy-list.net

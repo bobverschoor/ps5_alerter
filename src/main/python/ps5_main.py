@@ -4,6 +4,7 @@ import requests
 import configparser
 import os
 import datetime
+from bs4 import BeautifulSoup
 
 BASE_URL = "https://api.telegram.org/bot"
 SECRETS_FILE = 'resource/secrets.txt'
@@ -18,6 +19,8 @@ URL = 'url'
 NOTIFY = 'notify'
 NOTIFY_START_UUR = 'start_uur'
 NOTIFY_STOP_UUR = 'stop_uur'
+PROXY = 'proxy'
+PROXY_PROVIDER = 'proxylist_provider'
 
 
 def get_base_config(filename) -> configparser.ConfigParser:
@@ -68,21 +71,46 @@ def get_config():
     else:
         config_ok = False
         print("Config file not properly filled, missing " + NOTIFY)
+    if PROXY in config:
+        if PROXY_PROVIDER in config[PROXY]:
+            if not config[PROXY][PROXY_PROVIDER].startswith("http"):
+                config_ok = False
+                print("Config file value of " + PROXY + " not correct url.")
+        else:
+            config_ok = False
+            print("Config file not properly filled, missing " + PROXY_PROVIDER)
+    else:
+        config_ok = False
+        print("Config file not properly filled, missing " + PROXY)
     if config_ok:
         return config
     else:
         exit(1)
 
 
-def leverbaar(url, check):
+def get_proxy(config):
+    proxies = []
+    url = config[PROXY][PROXY_PROVIDER]
+    r = requests.get(url)
+    if r.status_code == 200:
+        proxylist_html = BeautifulSoup(r.text, 'html.parser')
+        lines = proxylist_html.find(id="raw").text
+        for line in lines.splitlines():
+            if line != "" and line[0].isdigit():
+                proxies.append(line.strip())
+    return proxies
+
+
+def leverbaar(url, check, proxy):
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_' + str(random.randint(0, 9))
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                      'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.1 Safari/605.1.15'
     }
     # amazon redirects indien geen browser-achtige user agent. daarnaast is er een soort bot detectie ;-0
-    # Hopelijk werkt de randomizer op de useragent goed genoeg, icm de sessie, en dus acceptatie van cookies.
+    # daarnaast verlopen requests via een proxy
     s = requests.session()
     par = {"par":str(random.randint(0, 9))+str(random.randint(0, 9))+str(random.randint(0, 9))}
-    r = s.get(url, headers=headers, params=par)
+    r = s.get(url, headers=headers, params=par, proxies=proxy)
     if r.status_code == 200:
         if check in r.text:
             return False
@@ -124,17 +152,22 @@ def same_message(naam):
             pass
     return False
 
+
 def main():
     config = get_config()
     winkel = get_winkels()
     genotificeerd = False
     winkels = ""
+    proxies_list = get_proxy(config)
+    randomproxy = {}
+    if proxies_list:
+        randomproxy = {'http': random.choice(proxies_list)}
     for winkelnaam in winkel.sections():
         if winkels == "":
             winkels = winkelnaam
         else:
             winkels += ', ' + winkelnaam
-        if leverbaar(winkel[winkelnaam][URL], winkel[winkelnaam][VOORRAAD_TEKST]):
+        if leverbaar(winkel[winkelnaam][URL], winkel[winkelnaam][VOORRAAD_TEKST], randomproxy):
             if not same_message(winkelnaam):
                 genotificeerd = notify(winkelnaam + '\n' + winkel[winkelnaam][URL], config)
         else:
