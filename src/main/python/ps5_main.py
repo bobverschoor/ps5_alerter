@@ -114,14 +114,14 @@ def notify(message, config):
 
 def same_message(naam):
     lastmessage_file = "lastmessage"
-    if naam == "":
-        os.remove(lastmessage_file)
-    else:
-        if os.path.exists(lastmessage_file):
-            return True
+    if os.path.exists(lastmessage_file):
+        if naam == "":
+            os.remove(lastmessage_file)
         else:
-            with open(lastmessage_file, 'w') as fp:
-                pass
+            return True
+    else:
+        with open(lastmessage_file, 'w') as fp:
+            pass
     return False
 
 def main():
