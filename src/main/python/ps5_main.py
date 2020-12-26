@@ -81,7 +81,8 @@ def leverbaar(url, check):
     # amazon redirects indien geen browser-achtige user agent. daarnaast is er een soort bot detectie ;-0
     # Hopelijk werkt de randomizer op de useragent goed genoeg, icm de sessie, en dus acceptatie van cookies.
     s = requests.session()
-    r = s.get(url, headers=headers)
+    par = {"par":str(random.randint(0, 9))+str(random.randint(0, 9))+str(random.randint(0, 9))}
+    r = s.get(url, headers=headers, params=par)
     if r.status_code == 200:
         if check in r.text:
             return False
@@ -111,6 +112,18 @@ def notify(message, config):
         print("No notification due to configured time window")
 
 
+def same_message(naam):
+    lastmessage_file = "lastmessage"
+    if naam == "":
+        os.remove(lastmessage_file)
+    else:
+        if os.path.exists(lastmessage_file):
+            return True
+        else:
+            with open(lastmessage_file, 'w') as fp:
+                pass
+    return False
+
 def main():
     config = get_config()
     winkel = get_winkels()
@@ -122,13 +135,15 @@ def main():
         else:
             winkels += ', ' + winkelnaam
         if leverbaar(winkel[winkelnaam][URL], winkel[winkelnaam][VOORRAAD_TEKST]):
-            genotificeerd = notify(winkelnaam + '\n' + winkel[winkelnaam][URL], config)
+            if not same_message(winkelnaam):
+                genotificeerd = notify(winkelnaam + '\n' + winkel[winkelnaam][URL], config)
         else:
             pass
             # print("niet leverbaar bij " + winkelnaam)
     if not genotificeerd:
         now = datetime.datetime.now()
         if now.minute == 0:
+            same_message("")
             # Elk uur een notificatie om aan te tonen dat ie nog steeds draait en alles nog werkt.
             notify(winkels + '\nhebben de ps5 niet op voorraad.', config)
 
