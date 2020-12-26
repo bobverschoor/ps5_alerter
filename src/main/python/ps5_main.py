@@ -19,6 +19,7 @@ URL = 'url'
 NOTIFY = 'notify'
 NOTIFY_START_UUR = 'start_uur'
 NOTIFY_STOP_UUR = 'stop_uur'
+NOTIFY_TEST_MINUTE = 'test_minute'
 PROXY = 'proxy'
 PROXY_PROVIDER = 'proxylist_provider'
 
@@ -56,15 +57,26 @@ def valid_hours(value):
         return False
 
 
+def valid_minute(value):
+    if 0 <= value < 60:
+        return True
+    else:
+        return False
+
+
 def get_config():
     config_ok = True
     config = get_base_config(CONFIG_FILE)
     if NOTIFY in config:
-        if NOTIFY_START_UUR in config[NOTIFY] and NOTIFY_STOP_UUR in config[NOTIFY]:
+        if NOTIFY_START_UUR in config[NOTIFY] and NOTIFY_STOP_UUR in config[NOTIFY] and \
+                NOTIFY_TEST_MINUTE in config[NOTIFY]:
             if not valid_hours(int(config[NOTIFY][NOTIFY_START_UUR])) or \
                not valid_hours(int(config[NOTIFY][NOTIFY_STOP_UUR])):
                 config_ok = False
                 print("Config file values of " + NOTIFY + " not correct numbers, must be 0 - 23")
+            if not valid_minute(int(config[NOTIFY][NOTIFY_TEST_MINUTE])):
+                config_ok = False
+                print("Config file values of " + NOTIFY + " not correct minute, must be 0 - 59")
         else:
             config_ok = False
             print("Config file not properly filled, missing " + NOTIFY_START_UUR + " or " + NOTIFY_STOP_UUR)
@@ -175,7 +187,7 @@ def main():
             # print("niet leverbaar bij " + winkelnaam)
     if not genotificeerd:
         now = datetime.datetime.now()
-        if now.minute == 0:
+        if now.minute == int(config[NOTIFY][NOTIFY_TEST_MINUTE]):
             same_message("")
             # Elk uur een notificatie om aan te tonen dat ie nog steeds draait en alles nog werkt.
             notify(winkels + '\nhebben de ps5 niet op voorraad.', config)
