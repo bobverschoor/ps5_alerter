@@ -28,18 +28,21 @@ BOT_DETECTIE = 'bot_detectie'
 class Proxy:
     def __init__(self, proxylistprovider):
         self.proxylistprovider = proxylistprovider
-        self.proxies = []
+        self.proxies = self.retrievelist()
         self.usedproxies = []
 
+    def retrievelist(self):
+        proxies = []
+        r = requests.get(self.proxylistprovider)
+        if r.status_code == 200:
+            proxylist_html = BeautifulSoup(r.text, 'html.parser')
+            lines = proxylist_html.find(id="raw").text
+            for line in lines.splitlines():
+                if line != "" and line[0].isdigit():
+                    proxies.append(line.strip())
+        return proxies
+
     def get_random_proxy(self):
-        if not self.proxies:
-            r = requests.get(self.proxylistprovider)
-            if r.status_code == 200:
-                proxylist_html = BeautifulSoup(r.text, 'html.parser')
-                lines = proxylist_html.find(id="raw").text
-                for line in lines.splitlines():
-                    if line != "" and line[0].isdigit():
-                        self.proxies.append(line.strip())
         randomproxy = {'http': random.choice(self.proxies)}
         while randomproxy in self.usedproxies and len(self.proxies) > len(self.usedproxies):
             randomproxy = {'http': random.choice(self.proxies)}
@@ -130,27 +133,28 @@ def leverbaar(url, check, bot_detectie, proxy):
     }
     # amazon redirects indien geen browser-achtige user agent. Daarnaast is er een soort bot detectie ;-0
     # en verlopen requests via een proxy
-    retry = True
+    retries = len(proxy.proxies)
     opvoorraad = False
-    while retry:
+    while retries > 0:
         s = requests.session()
         par = {"par":str(random.randint(0, 9))+str(random.randint(0, 9))+str(random.randint(0, 9))}
         r = s.get(url, headers=headers, params=par, proxies=proxy.get_random_proxy())
         if r.status_code == 200:
             if bot_detectie != "" and bot_detectie in r.text:
-                retry = True
+                print(retries)
+                retries -= 1
             elif check in r.text:
                 opvoorraad = False
-                retry = False
+                retries = 0
             else:
                 print(r.text)
                 opvoorraad = True
-                retry = False
+                retries = 0
         else:
             print(r.status_code)
             print(url)
             opvoorraad = False
-            retry = False
+            retries = 0
     return opvoorraad
 
 
@@ -199,6 +203,7 @@ def main():
             botdetectie = winkel[winkelnaam][BOT_DETECTIE]
         else:
             botdetectie = ""
+        proxy.usedproxies = []
         if leverbaar(winkel[winkelnaam][URL], winkel[winkelnaam][VOORRAAD_TEKST], botdetectie, proxy):
             if not same_message(winkelnaam):
                 genotificeerd = notify(winkelnaam + '\n' + winkel[winkelnaam][URL], config)
