@@ -22,6 +22,29 @@ NOTIFY_STOP_UUR = 'stop_uur'
 NOTIFY_TEST_MINUTE = 'test_minute'
 PROXY = 'proxy'
 PROXY_PROVIDER = 'proxylist_provider'
+BOT_DETECTIE = 'bot_detectie'
+
+
+class Proxy:
+    def __init__(self, proxylistprovider):
+        self.proxylistprovider = proxylistprovider
+        self.proxies = []
+        self.usedproxies = []
+
+    def get_random_proxy(self):
+        if not self.proxies:
+            r = requests.get(self.proxylistprovider)
+            if r.status_code == 200:
+                proxylist_html = BeautifulSoup(r.text, 'html.parser')
+                lines = proxylist_html.find(id="raw").text
+                for line in lines.splitlines():
+                    if line != "" and line[0].isdigit():
+                        self.proxies.append(line.strip())
+        randomproxy = {'http': random.choice(self.proxies)}
+        while randomproxy in self.usedproxies and len(self.proxies) > len(self.usedproxies):
+            randomproxy = {'http': random.choice(self.proxies)}
+        self.usedproxies.append(randomproxy)
+        return randomproxy
 
 
 def get_base_config(filename) -> configparser.ConfigParser:
@@ -100,39 +123,35 @@ def get_config():
         exit(1)
 
 
-def get_proxy(config):
-    proxies = []
-    url = config[PROXY][PROXY_PROVIDER]
-    r = requests.get(url)
-    if r.status_code == 200:
-        proxylist_html = BeautifulSoup(r.text, 'html.parser')
-        lines = proxylist_html.find(id="raw").text
-        for line in lines.splitlines():
-            if line != "" and line[0].isdigit():
-                proxies.append(line.strip())
-    return proxies
-
-
-def leverbaar(url, check, proxy):
+def leverbaar(url, check, bot_detectie, proxy):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
                       'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.1 Safari/605.1.15'
     }
-    # amazon redirects indien geen browser-achtige user agent. daarnaast is er een soort bot detectie ;-0
-    # daarnaast verlopen requests via een proxy
-    s = requests.session()
-    par = {"par":str(random.randint(0, 9))+str(random.randint(0, 9))+str(random.randint(0, 9))}
-    r = s.get(url, headers=headers, params=par, proxies=proxy)
-    if r.status_code == 200:
-        if check in r.text:
-            return False
+    # amazon redirects indien geen browser-achtige user agent. Daarnaast is er een soort bot detectie ;-0
+    # en verlopen requests via een proxy
+    retry = True
+    opvoorraad = False
+    while retry:
+        s = requests.session()
+        par = {"par":str(random.randint(0, 9))+str(random.randint(0, 9))+str(random.randint(0, 9))}
+        r = s.get(url, headers=headers, params=par, proxies=proxy.get_random_proxy())
+        if r.status_code == 200:
+            if bot_detectie != "" and bot_detectie in r.text:
+                retry = True
+            elif check in r.text:
+                opvoorraad = False
+                retry = False
+            else:
+                print(r.text)
+                opvoorraad = True
+                retry = False
         else:
-            print(r.text)
-            return True
-    else:
-        print(r.status_code)
-        print(url)
-        return False
+            print(r.status_code)
+            print(url)
+            opvoorraad = False
+            retry = False
+    return opvoorraad
 
 
 def notify(message, config):
@@ -170,16 +189,17 @@ def main():
     winkel = get_winkels()
     genotificeerd = False
     winkels = ""
-    proxies_list = get_proxy(config)
-    randomproxy = {}
-    if proxies_list:
-        randomproxy = {'http': random.choice(proxies_list)}
+    proxy = Proxy(config[PROXY][PROXY_PROVIDER])
     for winkelnaam in winkel.sections():
         if winkels == "":
             winkels = winkelnaam
         else:
             winkels += ', ' + winkelnaam
-        if leverbaar(winkel[winkelnaam][URL], winkel[winkelnaam][VOORRAAD_TEKST], randomproxy):
+        if BOT_DETECTIE in winkel[winkelnaam]:
+            botdetectie = winkel[winkelnaam][BOT_DETECTIE]
+        else:
+            botdetectie = ""
+        if leverbaar(winkel[winkelnaam][URL], winkel[winkelnaam][VOORRAAD_TEKST], botdetectie, proxy):
             if not same_message(winkelnaam):
                 genotificeerd = notify(winkelnaam + '\n' + winkel[winkelnaam][URL], config)
         else:

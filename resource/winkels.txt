@@ -5,6 +5,7 @@ voorraad_tekst=Niet leverbaar
 [amazon.nl]
 url=https://www.amazon.nl/dp/B08H93ZRK9/
 voorraad_tekst=Momenteel niet verkrijgbaar
+bot_detectie=api-services-support@amazon.com
 
 [coolblue.nl]
 url=https://www.coolblue.nl/product/865866/playstation-5.html
