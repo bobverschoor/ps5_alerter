@@ -55,9 +55,14 @@ def get_base_config(filename) -> configparser.ConfigParser:
     if os.path.isfile(filename):
         config.read(filename)
     else:
-        print("Missing file: " + filename)
+        log("Missing file: " + filename)
         exit(1)
     return config
+
+
+def log(message):
+    now = str(datetime.datetime.now())
+    print(now + "\t" + message)
 
 
 def get_secrets():
@@ -66,9 +71,9 @@ def get_secrets():
         if CHANNEL_ID in config[TELEGRAM] and TOKEN in config[TELEGRAM]:
             return config
         else:
-            print("Secrets file not properly filled, missing chanel_id of token")
+            log("Secrets file not properly filled, missing chanel_id of token")
     else:
-        print('Secrets does not contain telegram section')
+        log('Secrets does not contain telegram section')
     exit(1)
 
 
@@ -99,27 +104,27 @@ def get_config():
             if not valid_hours(int(config[NOTIFY][NOTIFY_START_UUR])) or \
                not valid_hours(int(config[NOTIFY][NOTIFY_STOP_UUR])):
                 config_ok = False
-                print("Config file values of " + NOTIFY + " not correct numbers, must be 0 - 23")
+                log("Config file values of " + NOTIFY + " not correct numbers, must be 0 - 23")
             if not valid_minute(int(config[NOTIFY][NOTIFY_TEST_MINUTE])):
                 config_ok = False
-                print("Config file values of " + NOTIFY + " not correct minute, must be 0 - 59")
+                log("Config file values of " + NOTIFY + " not correct minute, must be 0 - 59")
         else:
             config_ok = False
-            print("Config file not properly filled, missing " + NOTIFY_START_UUR + " or " + NOTIFY_STOP_UUR)
+            log("Config file not properly filled, missing " + NOTIFY_START_UUR + " or " + NOTIFY_STOP_UUR)
     else:
         config_ok = False
-        print("Config file not properly filled, missing " + NOTIFY)
+        log("Config file not properly filled, missing " + NOTIFY)
     if PROXY in config:
         if PROXY_PROVIDER in config[PROXY]:
             if not config[PROXY][PROXY_PROVIDER].startswith("http"):
                 config_ok = False
-                print("Config file value of " + PROXY + " not correct url.")
+                log("Config file value of " + PROXY + " not correct url.")
         else:
             config_ok = False
-            print("Config file not properly filled, missing " + PROXY_PROVIDER)
+            log("Config file not properly filled, missing " + PROXY_PROVIDER)
     else:
         config_ok = False
-        print("Config file not properly filled, missing " + PROXY)
+        log("Config file not properly filled, missing " + PROXY)
     if config_ok:
         return config
     else:
@@ -141,18 +146,18 @@ def leverbaar(url, check, bot_detectie, proxy):
         r = s.get(url, headers=headers, params=par, proxies=proxy.get_random_proxy())
         if r.status_code == 200:
             if bot_detectie != "" and bot_detectie in r.text:
-                print(retries)
+                log("botdetactie, using another proxy: " + str(retries))
                 retries -= 1
             elif check in r.text:
                 opvoorraad = False
                 retries = 0
             else:
-                print(r.text)
+                log(r.text)
                 opvoorraad = True
                 retries = 0
         else:
-            print(r.status_code)
-            print(url)
+            log(r.status_code)
+            log(url)
             opvoorraad = False
             retries = 0
     return opvoorraad
@@ -169,10 +174,10 @@ def notify(message, config):
         if r.status_code == 200:
             return True
         else:
-            print(r.text)
+            log(r.text)
             exit(1)
     else:
-        print("No notification due to configured time window")
+        log("No notification due to configured time window")
 
 
 def same_message(naam):
@@ -209,7 +214,7 @@ def main():
                 genotificeerd = notify(winkelnaam + '\n' + winkel[winkelnaam][URL], config)
         else:
             pass
-            # print("niet leverbaar bij " + winkelnaam)
+            # log("niet leverbaar bij " + winkelnaam)
     if not genotificeerd:
         now = datetime.datetime.now()
         if now.minute == int(config[NOTIFY][NOTIFY_TEST_MINUTE]):
@@ -219,4 +224,6 @@ def main():
 
 
 if __name__ == "__main__":
+    log("start ps5 alerter")
     main()
+    log("end ps5 alerter")
