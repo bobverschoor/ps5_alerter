@@ -163,21 +163,17 @@ def leverbaar(url, check, bot_detectie, proxy):
     return opvoorraad
 
 
-def notify(message, config):
+def notify(message):
     secret = get_secrets()
-    now = datetime.datetime.now()
     # telegram wil -100 voor chat_id indien een bot
     message = {'chat_id': "-100" + secret[TELEGRAM][CHANNEL_ID],
                'text': message}
-    if int(config[NOTIFY][NOTIFY_START_UUR]) <= now.hour < int(config[NOTIFY][NOTIFY_STOP_UUR]):
-        r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
-        if r.status_code == 200:
-            return True
-        else:
-            log(r.text)
-            exit(1)
+    r = requests.post(BASE_URL + secret[TELEGRAM][TOKEN] + "/sendMessage", data=message)
+    if r.status_code == 200:
+        return True
     else:
-        log("No notification due to configured time window")
+        log(r.text)
+        exit(1)
 
 
 def same_message(naam):
@@ -195,32 +191,35 @@ def same_message(naam):
 
 def main():
     config = get_config()
-    winkel = get_winkels()
-    genotificeerd = False
-    winkels = ""
-    proxy = Proxy(config[PROXY][PROXY_PROVIDER])
-    for winkelnaam in winkel.sections():
-        if winkels == "":
-            winkels = winkelnaam
-        else:
-            winkels += ', ' + winkelnaam
-        if BOT_DETECTIE in winkel[winkelnaam]:
-            botdetectie = winkel[winkelnaam][BOT_DETECTIE]
-        else:
-            botdetectie = ""
-        proxy.usedproxies = []
-        if leverbaar(winkel[winkelnaam][URL], winkel[winkelnaam][VOORRAAD_TEKST], botdetectie, proxy):
-            if not same_message(winkelnaam):
-                genotificeerd = notify(winkelnaam + '\n' + winkel[winkelnaam][URL], config)
-        else:
-            pass
-            # log("niet leverbaar bij " + winkelnaam)
-    if not genotificeerd:
-        now = datetime.datetime.now()
-        if now.minute == int(config[NOTIFY][NOTIFY_TEST_MINUTE]):
-            same_message("")
-            # Elk uur een notificatie om aan te tonen dat ie nog steeds draait en alles nog werkt.
-            notify(winkels + '\nhebben de ps5 niet op voorraad.', config)
+    now = datetime.datetime.now()
+    if int(config[NOTIFY][NOTIFY_START_UUR]) <= now.hour < int(config[NOTIFY][NOTIFY_STOP_UUR]):
+        winkel = get_winkels()
+        genotificeerd = False
+        winkels = ""
+        proxy = Proxy(config[PROXY][PROXY_PROVIDER])
+        for winkelnaam in winkel.sections():
+            if winkels == "":
+                winkels = winkelnaam
+            else:
+                winkels += ', ' + winkelnaam
+            if BOT_DETECTIE in winkel[winkelnaam]:
+                botdetectie = winkel[winkelnaam][BOT_DETECTIE]
+            else:
+                botdetectie = ""
+            proxy.usedproxies = []
+            if leverbaar(winkel[winkelnaam][URL], winkel[winkelnaam][VOORRAAD_TEKST], botdetectie, proxy):
+                if not same_message(winkelnaam):
+                    genotificeerd = notify(winkelnaam + '\n' + winkel[winkelnaam][URL])
+            else:
+                pass
+                # log("niet leverbaar bij " + winkelnaam)
+        if not genotificeerd:
+            if now.minute == int(config[NOTIFY][NOTIFY_TEST_MINUTE]):
+                same_message("")
+                # Elk uur een notificatie om aan te tonen dat ie nog steeds draait en alles nog werkt.
+                notify(winkels + '\nhebben de ps5 niet op voorraad.')
+    else:
+        log("No checking due to configured time window")
 
 
 if __name__ == "__main__":
