@@ -152,10 +152,12 @@ def leverbaar(url, check, bot_detectie, proxy):
                 opvoorraad = False
                 retries = 0
             else:
+                log(url)
                 log(r.text)
                 opvoorraad = True
                 retries = 0
         else:
+            log(url)
             log(r.status_code)
             log(url)
             opvoorraad = False
