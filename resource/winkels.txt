@@ -1,6 +1,6 @@
 [bol.com]
 url=https://www.bol.com/nl/p/sony-playstation-5-console/9300000004162282
-voorraad_tekst=Niet leverbaar
+voorraad_tekst=<div class="buy-block__title" data-test="title">Niet leverbaar</div>
 
 [amazon.nl]
 url=https://www.amazon.nl/dp/B08H93ZRK9/

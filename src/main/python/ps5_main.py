@@ -139,6 +139,7 @@ def leverbaar(url, check, bot_detectie, proxy):
     # amazon redirects indien geen browser-achtige user agent. Daarnaast is er een soort bot detectie ;-0
     # en verlopen requests via een proxy
     retries = len(proxy.proxies)
+    log_nr_of_retries = 0
     opvoorraad = False
     while retries > 0:
         s = requests.session()
@@ -146,8 +147,8 @@ def leverbaar(url, check, bot_detectie, proxy):
         r = s.get(url, headers=headers, params=par, proxies=proxy.get_random_proxy())
         if r.status_code == 200:
             if bot_detectie != "" and bot_detectie in r.text:
-                log("botdetactie, using another proxy: " + str(retries))
                 retries -= 1
+                log_nr_of_retries += 1
             elif check in r.text:
                 opvoorraad = False
                 retries = 0
@@ -162,6 +163,8 @@ def leverbaar(url, check, bot_detectie, proxy):
             log(url)
             opvoorraad = False
             retries = 0
+    if log_nr_of_retries != 0:
+        log("botdetactie vermijding " + str(log_nr_of_retries) + " keer toegepast.")
     return opvoorraad
 
 
