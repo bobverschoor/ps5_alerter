@@ -9,4 +9,4 @@ bot_detectie=api-services-support@amazon.com
 
 [coolblue.nl]
 url=https://www.coolblue.nl/product/865866/playstation-5.html
-voorraad_tekst=Binnenkort leverbaar
+voorraad_tekst=Binnenkort leverbaar|Tijdelijk uitverkocht

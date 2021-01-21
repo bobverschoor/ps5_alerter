@@ -131,6 +131,14 @@ def get_config():
         exit(1)
 
 
+def checks_on_page(checks, page):
+    checks = checks.split('|')
+    for check in checks:
+        if check in page:
+            return True
+    return False
+
+
 def leverbaar(url, check, bot_detectie, proxy):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
@@ -149,7 +157,7 @@ def leverbaar(url, check, bot_detectie, proxy):
             if bot_detectie != "" and bot_detectie in r.text:
                 retries -= 1
                 log_nr_of_retries += 1
-            elif check in r.text:
+            elif checks_on_page(check, r.text):
                 opvoorraad = False
                 retries = 0
             else:
