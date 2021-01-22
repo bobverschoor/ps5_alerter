@@ -10,3 +10,7 @@ bot_detectie=api-services-support@amazon.com
 [coolblue.nl]
 url=https://www.coolblue.nl/product/865866/playstation-5.html
 voorraad_tekst=Binnenkort leverbaar|Tijdelijk uitverkocht
+
+[game mania]
+url=https://www.gamemania.nl/Consoles/playstation-5/144093_playstation-5-disc-edition
+voorraad_tekst=(Niet beschikbaar)
