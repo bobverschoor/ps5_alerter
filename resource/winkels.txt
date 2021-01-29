@@ -11,6 +11,10 @@ bot_detectie=api-services-support@amazon.com
 url=https://www.coolblue.nl/product/865866/playstation-5.html
 voorraad_tekst=Binnenkort leverbaar|Tijdelijk uitverkocht
 
-[game mania]
+[gamemania.nl]
 url=https://www.gamemania.nl/Consoles/playstation-5/144093_playstation-5-disc-edition
 voorraad_tekst=(Niet beschikbaar)
+
+[intertoys.nl]
+url=https://www.intertoys.nl/shop/nl/intertoys/ps5-825gb
+voorraad_tekst=PlayStation 5 uitverkocht!
