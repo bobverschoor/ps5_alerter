@@ -165,6 +165,11 @@ def leverbaar(url, check, bot_detectie, proxy):
                 log(r.text)
                 opvoorraad = True
                 retries = 0
+        elif r.status_code == 404:
+            log(url)
+            log("404 status")
+            opvoorraad = False
+            retries = 0
         else:
             log(url)
             log(r.status_code)
