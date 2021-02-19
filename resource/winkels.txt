@@ -17,4 +17,4 @@ voorraad_tekst=(Niet beschikbaar)
 
 [intertoys.nl]
 url=https://www.intertoys.nl/shop/nl/intertoys/ps5-825gb
-voorraad_tekst=PlayStation 5 uitverkocht!|Test JSP
+voorraad_tekst=PlayStation 5 uitverkocht!|Test JSP|Bekijk de folder
