@@ -62,7 +62,7 @@ def get_base_config(filename) -> configparser.ConfigParser:
 
 def log(message):
     now = str(datetime.datetime.now())
-    print(now + "\t" + message)
+    print(now + "\t" + str(message))
 
 
 def get_secrets():
@@ -172,8 +172,7 @@ def leverbaar(url, check, bot_detectie, proxy):
             retries = 0
         else:
             log(url)
-            log(r.status_code)
-            log(url)
+            log(str(r.status_code))
             opvoorraad = False
             retries = 0
     if log_nr_of_retries != 0:
