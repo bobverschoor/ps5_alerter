@@ -139,47 +139,51 @@ def checks_on_page(checks, page):
     return False
 
 
-def leverbaar(url, check, bot_detectie, proxy):
+def leverbaar(urls, check, bot_detectie, proxy):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
                       'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.1 Safari/605.1.15'
     }
     # amazon redirects indien geen browser-achtige user agent. Daarnaast is er een soort bot detectie ;-0
     # en verlopen requests via een proxy
-    retries = len(proxy.proxies)
-    log_nr_of_retries = 0
     opvoorraad = False
-    try:
-        while retries > 0:
-            s = requests.session()
-            par = {"par":str(random.randint(0, 9))+str(random.randint(0, 9))+str(random.randint(0, 9))}
-            r = s.get(url, headers=headers, params=par, proxies=proxy.get_random_proxy(), timeout=10)
-            if r.status_code == 200:
-                if bot_detectie != "" and bot_detectie in r.text:
-                    retries -= 1
-                    log_nr_of_retries += 1
-                elif checks_on_page(check, r.text):
+    for url in urls.split(','):
+        url.strip()
+        try:
+            retries = len(proxy.proxies)
+            log_nr_of_retries = 0
+            while retries > 0:
+                s = requests.session()
+                par = {"par":str(random.randint(0, 9))+str(random.randint(0, 9))+str(random.randint(0, 9))}
+                r = s.get(url, headers=headers, params=par, proxies=proxy.get_random_proxy(), timeout=10)
+                if r.status_code == 200:
+                    if bot_detectie != "" and bot_detectie in r.text:
+                        retries -= 1
+                        log_nr_of_retries += 1
+                    elif checks_on_page(check, r.text):
+                        opvoorraad = False
+                        retries = 0
+                    else:
+                        log(url)
+                        log(r.text)
+                        opvoorraad = True
+                        retries = 0
+                elif r.status_code == 404:
+                    log(url)
+                    log("404 status")
                     opvoorraad = False
                     retries = 0
                 else:
                     log(url)
-                    log(r.text)
-                    opvoorraad = True
+                    log(str(r.status_code))
+                    opvoorraad = False
                     retries = 0
-            elif r.status_code == 404:
-                log(url)
-                log("404 status")
-                opvoorraad = False
-                retries = 0
-            else:
-                log(url)
-                log(str(r.status_code))
-                opvoorraad = False
-                retries = 0
-        if log_nr_of_retries != 0:
-            log("botdetactie vermijding " + str(log_nr_of_retries) + " keer toegepast.")
-    except Exception as e:
-        log(url + " " + str(e))
+            if log_nr_of_retries != 0:
+                log("botdetactie vermijding " + str(log_nr_of_retries) + " keer toegepast.")
+            if opvoorraad:
+                break
+        except Exception as e:
+            log(url + " " + str(e))
     return opvoorraad
 
 

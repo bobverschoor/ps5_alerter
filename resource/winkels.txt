@@ -8,7 +8,9 @@ voorraad_tekst=Momenteel niet verkrijgbaar
 bot_detectie=api-services-support@amazon.com
 
 [coolblue.nl]
-url=https://www.coolblue.nl/product/865866/playstation-5.html
+url=https://www.coolblue.nl/product/865866/playstation-5.html,
+    https://www.coolblue.nl/product/873655/playstation-5-sony-playstation-5-dualsense-draadloze-controller.html,
+    https://www.coolblue.nl/product/878814/playstation-5-fifa-21-playstation-5-dualsense-controller.html
 voorraad_tekst=Binnenkort leverbaar|Tijdelijk uitverkocht
 
 [gamemania.nl]
