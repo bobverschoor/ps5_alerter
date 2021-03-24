@@ -13,10 +13,6 @@ url=https://www.coolblue.nl/product/865866/playstation-5.html,
     https://www.coolblue.nl/product/878814/playstation-5-fifa-21-playstation-5-dualsense-controller.html
 voorraad_tekst=Binnenkort leverbaar|Tijdelijk uitverkocht
 
-[gamemania.nl]
-url=https://www.gamemania.nl/Consoles/playstation-5/144093_playstation-5-disc-edition
-voorraad_tekst=(Niet beschikbaar)
-
 [intertoys.nl]
 url=https://www.intertoys.nl/shop/nl/intertoys/ps5-825gb
 voorraad_tekst=PlayStation 5 uitverkocht!|Test JSP|IntertoysHomePageContainer1
