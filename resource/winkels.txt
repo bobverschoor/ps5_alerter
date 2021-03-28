@@ -4,7 +4,7 @@ voorraad_tekst=<div class="buy-block__title" data-test="title">Niet leverbaar</d
 
 [amazon.nl]
 url=https://www.amazon.nl/dp/B08H93ZRK9/
-voorraad_tekst=Momenteel niet verkrijgbaar
+voorraad_tekst=Momenteel niet verkrijgbaar|Dualsense Charging Station
 bot_detectie=api-services-support@amazon.com
 
 [coolblue.nl]
